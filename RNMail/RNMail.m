@@ -67,27 +67,31 @@ RCT_EXPORT_METHOD(mail:(NSDictionary *)options
             NSArray *bccRecipients = [RCTConvert NSArray:options[@"bccRecipients"]];
             [mail setBccRecipients:bccRecipients];
         }
-
-        if (options[@"attachment"] && options[@"attachment"][@"path"] && options[@"attachment"][@"type"]){
-            NSString *attachmentPath = [RCTConvert NSString:options[@"attachment"][@"path"]];
-            NSString *attachmentType = [RCTConvert NSString:options[@"attachment"][@"type"]];
-            NSString *attachmentName = [RCTConvert NSString:options[@"attachment"][@"name"]];
-
-            // Set default filename if not specificed
-            if (!attachmentName) {
-                attachmentName = [[attachmentPath lastPathComponent] stringByDeletingPathExtension];
+        NSArray *attachments = [RCTConvert NSArray:options[@"attachments"]];
+        for (NSDictionary *attachment in attachments) {
+            if (attachment && attachment[@"path"] && attachment[@"type"]){
+                //[RCTConvert NSArray:options[@"attachment"]];
+                NSString *attachmentPath = [RCTConvert NSString:attachment[@"path"]];
+                NSString *attachmentType = [RCTConvert NSString:attachment[@"type"]];
+                NSString *attachmentName = [RCTConvert NSString:attachment[@"name"]];
+                //NSLog(attachmentName, attachmentPath, attachmentType);
+                
+                // Set default filename if not specificed
+                if (!attachmentName) {
+                    attachmentName = [[attachmentPath lastPathComponent] stringByDeletingPathExtension];
+                }
+                
+                // Get the resource path and read the file using NSData
+                NSData *fileData = [NSData dataWithContentsOfFile:attachmentPath];
+                /*
+                 * Add additional mime types and PR if necessary. Find the list
+                 * of supported formats at http://www.iana.org/assignments/media-types/media-types.xhtml
+                 */
+                // Add attachment
+                [mail addAttachmentData:fileData mimeType:attachmentType fileName:attachmentName];
             }
-
-            // Get the resource path and read the file using NSData
-            NSData *fileData = [NSData dataWithContentsOfFile:attachmentPath];            
-            /*
-             * Add additional mime types and PR if necessary. Find the list
-             * of supported formats at http://www.iana.org/assignments/media-types/media-types.xhtml
-             */
-            // Add attachment
-            [mail addAttachmentData:fileData mimeType:attachmentType fileName:attachmentName];
         }
-
+ 
         UIViewController *root = [[[[UIApplication sharedApplication] delegate] window] rootViewController];
 
         while (root.presentedViewController) {
